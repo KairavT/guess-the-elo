@@ -1,0 +1,1 @@
+# architecture definition, no training logic

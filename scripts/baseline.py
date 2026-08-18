@@ -1,0 +1,1 @@
+# simple predictors the model has to beat: mean rating and a feature-based model

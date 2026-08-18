@@ -1,0 +1,1 @@
+# turns raw games into model inputs and rating targets

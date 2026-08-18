@@ -1,0 +1,1 @@
+# streams the Lichess dump, filters games, writes the kept ones to data/

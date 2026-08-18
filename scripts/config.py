@@ -1,0 +1,1 @@
+# shared constants: dump URL, filter thresholds, data paths, hyperparameters

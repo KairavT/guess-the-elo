@@ -1,1 +1,18 @@
-# streams the Lichess dump, filters games, writes the kept ones to data/
+import requests, zstandard, io, chess.pgn
+
+from config import URL
+
+with requests.get(URL, stream=True) as response:
+    decompress = zstandard.ZstdDecompressor()
+    reader = decompress.stream_reader(response.raw)
+    reader_text = io.TextIOWrapper(reader, encoding='utf-8')
+
+    count_games = 0
+    limit = 100
+    while True:
+        game = chess.pgn.read_game(reader_text)
+        if not game or count_games == limit:
+            break
+        count_games += 1
+    print(count_games)
+

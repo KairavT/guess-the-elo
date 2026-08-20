@@ -1,6 +1,6 @@
 import requests, zstandard, io, chess.pgn
 
-from config import URL
+from config import URL, ALLOWED_CATEGORIES
 
 with requests.get(URL, stream=True) as response:
     decompress = zstandard.ZstdDecompressor()
@@ -13,6 +13,13 @@ with requests.get(URL, stream=True) as response:
         game = chess.pgn.read_game(reader_text)
         if not game or count_games == limit:
             break
+        if game.headers.get('Event')\
+              not in ALLOWED_CATEGORIES:
+            continue
+        if game.headers.get('WhiteTitle') == 'BOT' or \
+            game.headers.get('BlackTitle') == 'BOT':
+            continue
+
         count_games += 1
     print(count_games)
 

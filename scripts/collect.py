@@ -1,6 +1,6 @@
 import requests, zstandard, io, chess.pgn
 
-from config import URL, ALLOWED_CATEGORIES
+from config import URL, ALLOWED_CATEGORIES, MIN_PLY
 
 with requests.get(URL, stream=True) as response:
     decompress = zstandard.ZstdDecompressor()
@@ -18,6 +18,8 @@ with requests.get(URL, stream=True) as response:
             continue
         if game.headers.get('WhiteTitle') == 'BOT' or \
             game.headers.get('BlackTitle') == 'BOT':
+            continue
+        if game.end().ply() < MIN_PLY:
             continue
 
         count_games += 1

@@ -1,0 +1,18 @@
+{
+  "name": "guess-the-elo-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Guess the Elo web app: replay real Lichess games, guess the rating, climb the leaderboard.",
+  "scripts": {
+    "dev": "wrangler dev --port 8790",
+    "deploy": "wrangler deploy",
+    "db:init:local": "wrangler d1 execute guess-the-elo-db --local --file=./schema.sql",
+    "db:seed:local": "wrangler d1 execute guess-the-elo-db --local --file=./seed/games.sql",
+    "db:init": "wrangler d1 execute guess-the-elo-db --remote --file=./schema.sql",
+    "db:seed": "wrangler d1 execute guess-the-elo-db --remote --file=./seed/games.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.45.0"
+  }
+}

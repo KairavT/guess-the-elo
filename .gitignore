@@ -4,3 +4,6 @@ data/
 *.pgn
 *.zst
 *.pt
+node_modules/
+.wrangler/
+site/seed/

@@ -1,49 +1,34 @@
-import requests, zstandard, io, json, chess.pgn
+import requests, zstandard, io, chess.pgn
 
-from config import URL, ALLOWED_CATEGORIES, MIN_PLY, NUM_GAMES, OUTPUT_PATH
+from config import URL, ALLOWED_CATEGORIES, MIN_PLY
 
-OUTPUT_PATH.parent.mkdir(exist_ok=True)
-
-with requests.get(URL, stream=True) as response, \
-        open(OUTPUT_PATH, 'w') as output:
+with requests.get(URL, stream=True) as response:
     decompress = zstandard.ZstdDecompressor()
     reader = decompress.stream_reader(response.raw)
     reader_text = io.TextIOWrapper(reader, encoding='utf-8')
 
     count_games = 0
-    while count_games < NUM_GAMES:
+    limit = 100
+    reject_counter = {"Wrong Event": 0,
+                      "Bot Game": 0,
+                      "Too Short":0}
+    while True:
         game = chess.pgn.read_game(reader_text)
-        if not game:
+        if not game or count_games == limit:
             break
-        headers = game.headers
-        if headers.get('Event') not in ALLOWED_CATEGORIES:
+        if game.headers.get('Event')\
+              not in ALLOWED_CATEGORIES:
+            reject_counter['Wrong Event'] += 1
             continue
-        if headers.get('WhiteTitle') == 'BOT' or \
-            headers.get('BlackTitle') == 'BOT':
+        if game.headers.get('WhiteTitle') == 'BOT' or \
+            game.headers.get('BlackTitle') == 'BOT':
+            reject_counter['Bot Game'] += 1
             continue
-        if not headers.get('WhiteElo', '').isdigit() or \
-            not headers.get('BlackElo', '').isdigit():
-            continue
-
-        moves, clocks = [], []
-        for node in game.mainline():
-            moves.append(node.move.uci())
-            clocks.append(node.clock())
-        if len(moves) < MIN_PLY:
+        if game.end().ply() < MIN_PLY:
+            reject_counter['Too Short'] += 1
             continue
 
-        record = {
-            'white_elo': int(headers['WhiteElo']),
-            'black_elo': int(headers['BlackElo']),
-            'time_control': headers.get('TimeControl'),
-            'result': headers.get('Result'),
-            'termination': headers.get('Termination'),
-            'moves': moves,
-            'clocks': clocks if None not in clocks else None,
-        }
-        output.write(json.dumps(record) + '\n')
         count_games += 1
-        if count_games % 1000 == 0:
-            print(count_games, 'games collected')
+    print(count_games)
+    print(reject_counter)
 
-print(count_games, 'games written to', OUTPUT_PATH)

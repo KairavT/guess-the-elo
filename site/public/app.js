@@ -165,21 +165,32 @@ function resultText(g) {
   return res + how;
 }
 
+// One scoresheet row per move pair: No. | White | Black, like the site's rail.
 function renderMeta() {
   const total = state.replay.labels.length;
   $('plyCounter').textContent = `${state.ply} / ${total}`;
-  const strip = $('moveStrip');
-  strip.innerHTML = '';
-  state.replay.labels.forEach((label, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'mv' + (i === state.ply - 1 ? ' current' : '');
-    btn.innerHTML = (i % 2 === 0 ? `<span class="mv-num">${i / 2 + 1}.</span>` : '') + label;
-    btn.onclick = () => goto(i + 1);
-    strip.appendChild(btn);
-  });
-  // Scroll only the strip itself — scrollIntoView would drag the whole page.
-  const cur = strip.querySelector('.current');
-  if (cur) strip.scrollLeft = cur.offsetLeft - strip.clientWidth / 2 + cur.clientWidth / 2;
+  const list = $('movelist');
+  list.innerHTML = '';
+  for (let i = 0; i < total; i += 2) {
+    const row = document.createElement('div');
+    row.className = 'mrow' + (state.ply - 1 === i || state.ply - 1 === i + 1 ? ' now' : '');
+    const no = document.createElement('span');
+    no.className = 'mno';
+    no.textContent = i / 2 + 1 + '.';
+    row.appendChild(no);
+    for (const j of [i, i + 1]) {
+      if (j >= total) break;
+      const btn = document.createElement('button');
+      btn.className = (j % 2 === 0 ? 'mw' : 'mb') + (j === state.ply - 1 ? ' cur' : '');
+      btn.textContent = state.replay.labels[j];
+      btn.onclick = () => { pause(); goto(j + 1); };
+      row.appendChild(btn);
+    }
+    list.appendChild(row);
+  }
+  // Scroll only the sheet itself — scrollIntoView would drag the whole page.
+  const cur = list.querySelector('.now');
+  if (cur) list.scrollTop = cur.offsetTop - list.clientHeight / 2;
 }
 
 // ── replay control ──────────────────────────────────────────────────────────
@@ -240,6 +251,7 @@ async function loadGame() {
   state.baseSeconds = tc.base;
   $('tcBadge').textContent = tc.label;
   $('metaResult').textContent = resultText(g);
+  $('railSides').textContent = 'elos sealed — guess to reveal';
   $('btnGuess').disabled = false;
   goto(0);
 }
@@ -267,6 +279,9 @@ async function submitGuess() {
     d.textContent = (r.delta >= 0 ? '+' : '') + r.delta;
     d.className = 'stat-num ' + (r.delta >= 0 ? 'pos' : 'neg');
     $('chipRating').textContent = r.rating;
+    $('railSides').textContent = `W ${r.whiteElo} · B ${r.blackElo}`;
+    $('progRating').textContent = r.rating;
+    $('progGames').textContent = r.gamesPlayed;
     $('guessCard').classList.add('hidden');
     $('revealCard').classList.remove('hidden');
     goto(state.replay.labels.length);
@@ -287,6 +302,9 @@ async function loadLeaderboard() {
     if (p.name.toLowerCase() === state.name.toLowerCase()) {
       tr.className = 'me';
       $('chipRating').textContent = p.rating;
+      $('progRating').textContent = p.rating;
+      $('progGames').textContent = p.games_played;
+      $('progBest').textContent = p.best_guess ?? '—';
     }
     tr.innerHTML = `<td>${i + 1}</td><td>${p.name.replace(/</g, '&lt;')}</td>` +
       `<td class="lb-rating">${p.rating}</td><td>${p.games_played}</td><td>${p.avg_err ?? '—'}</td>`;
@@ -355,6 +373,7 @@ function join() {
   localStorage.setItem('gte-name', name);
   $('chipName').textContent = name;
   $('chipRating').textContent = '';
+  for (const id of ['progRating', 'progGames', 'progBest']) $(id).textContent = '—';
   $('nameModal').classList.add('hidden');
   loadGame().catch(err => alert('Could not load game: ' + err.message));
   loadLeaderboard().catch(() => {});

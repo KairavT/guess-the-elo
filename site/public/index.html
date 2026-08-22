@@ -5,106 +5,120 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Guess the Elo</title>
   <meta name="description" content="Watch a real chess game, guess the rating, climb the leaderboard.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♞</text></svg>">
 </head>
 <body>
 
   <header class="topbar">
-    <h1 class="brand">♞ Guess the Elo</h1>
+    <h1 class="brand">Guess the Elo</h1>
+    <span class="brand-sub">real games &middot; real clocks &middot; one guess each</span>
     <button class="player-chip" id="playerChip" title="Click to change name">
       <span id="chipName">—</span>
       <span class="chip-rating" id="chipRating"></span>
     </button>
   </header>
 
-  <main class="layout">
+  <!-- ══════════ The arena: wager rail · board · scoresheet rail ══════════ -->
+  <section class="arena">
 
-    <!-- ══════════ Board column ══════════ -->
-    <section class="board-col">
-      <div class="card board-card">
-        <div class="seat" id="seatTop">
-          <span class="seat-label">Black<span class="seat-elo" id="eloBlack"></span></span>
-          <span class="clock" id="clockBlack">–:––</span>
-        </div>
+    <aside class="rail rail-l" aria-label="Your guess">
+      <span class="rail-title">The Wager</span>
+      <span class="rail-sub">average elo of both players</span>
 
-        <div class="board-frame">
-          <div class="board" id="board"></div>
-        </div>
-
-        <div class="seat" id="seatBottom">
-          <span class="seat-label">White<span class="seat-elo" id="eloWhite"></span></span>
-          <span class="clock" id="clockWhite">–:––</span>
-        </div>
-
-        <div class="game-meta">
-          <span class="badge" id="tcBadge">—</span>
-          <span class="meta-result" id="metaResult"></span>
-          <span class="ply-counter" id="plyCounter"></span>
-        </div>
-
-        <div class="controls">
-          <button class="ctl" id="btnStart" title="Start (Home)">⏮</button>
-          <button class="ctl" id="btnPrev"  title="Back (←)">◀</button>
-          <button class="ctl ctl-play" id="btnPlay" title="Play / pause (Space)">▶</button>
-          <button class="ctl" id="btnNext"  title="Forward (→)">▶︎▶︎</button>
-          <button class="ctl" id="btnEnd"   title="End (End)">⏭</button>
-          <button class="ctl ctl-speed" id="btnSpeed" title="Playback speed">1×</button>
-        </div>
-
-        <div class="movestrip" id="moveStrip"></div>
-      </div>
-    </section>
-
-    <!-- ══════════ Side column ══════════ -->
-    <section class="side-col">
-
-      <div class="card guess-card" id="guessCard">
-        <h2>Your guess</h2>
-        <p class="hint">Average rating of the two players</p>
+      <div class="rail-body" id="guessCard">
         <div class="guess-row">
           <input type="range"  id="guessSlider" min="500" max="2700" step="10" value="1500">
           <input type="number" id="guessNumber" min="500" max="2700" step="10" value="1500">
         </div>
-        <button class="btn-primary" id="btnGuess">Lock in guess</button>
+        <button class="gbtn primary" id="btnGuess">Lock in guess</button>
+        <span class="rail-note">Perfect guess +30 &middot; 300 off breaks even &middot; 600 off &minus;30. Elos stay sealed until you commit.</span>
       </div>
 
-      <div class="card reveal-card hidden" id="revealCard">
-        <h2>The reveal</h2>
+      <div class="rail-body hidden" id="revealCard">
         <div class="reveal-actual"><span id="revealActual">—</span><span class="reveal-sub">average elo</span></div>
         <div class="reveal-elos" id="revealElos"></div>
         <div class="reveal-stats">
-          <div class="stat"><span class="stat-num" id="revealGuess">—</span><span>your guess</span></div>
-          <div class="stat"><span class="stat-num" id="revealErr">—</span><span>off by</span></div>
-          <div class="stat"><span class="stat-num" id="revealDelta">—</span><span>rating</span></div>
+          <div class="stat"><b class="stat-num" id="revealGuess">—</b><i>your guess</i></div>
+          <div class="stat"><b class="stat-num" id="revealErr">—</b><i>off by</i></div>
+          <div class="stat"><b class="stat-num" id="revealDelta">—</b><i>rating</i></div>
         </div>
-        <button class="btn-primary" id="btnNextGame">Next game →</button>
+        <button class="gbtn primary" id="btnNextGame">Next game &rarr;</button>
       </div>
 
-      <div class="card">
-        <h2>Leaderboard</h2>
-        <table class="lb-table">
-          <thead><tr><th>#</th><th>player</th><th>rating</th><th>games</th><th>avg err</th></tr></thead>
-          <tbody id="lbBody"><tr><td colspan="5" class="lb-empty">no guesses yet</td></tr></tbody>
-        </table>
+      <div class="rail-prog" aria-live="polite">
+        <span><i>rating</i><b id="progRating">—</b></span>
+        <span><i>games</i><b id="progGames">—</b></span>
+        <span><i>best guess</i><b id="progBest">—</b></span>
+      </div>
+    </aside>
+
+    <div class="board-col">
+      <div class="seat" id="seatTop">
+        <span class="seat-label">Black<b class="seat-elo" id="eloBlack"></b></span>
+        <span class="clock" id="clockBlack">–:––</span>
       </div>
 
-      <div class="card" id="historyCard">
-        <h2>Your recent games</h2>
-        <ul class="history" id="historyList"><li class="lb-empty">nothing yet — lock in a guess</li></ul>
+      <div class="board" id="board"></div>
+
+      <div class="seat" id="seatBottom">
+        <span class="seat-label">White<b class="seat-elo" id="eloWhite"></b></span>
+        <span class="clock" id="clockWhite">–:––</span>
       </div>
 
-    </section>
-  </main>
+      <div class="under">
+        <span class="badge" id="tcBadge">—</span>
+        <span class="meta-result" id="metaResult"></span>
+        <span class="ply-counter" id="plyCounter"></span>
+      </div>
+    </div>
+
+    <aside class="rail rail-r" aria-label="Move list and playback controls">
+      <span class="rail-title">Scoresheet</span>
+      <span class="rail-sub" id="railSides">&mdash;</span>
+      <div class="sheet-cols"><span>No.</span><span>White</span><span>Black</span></div>
+      <div id="movelist"></div>
+      <div class="rail-foot">
+        <div class="btn-row">
+          <button class="gbtn" id="btnStart" title="Start (Home)">&#9198;</button>
+          <button class="gbtn" id="btnPrev"  title="Back (&larr;)">&#9664;</button>
+          <button class="gbtn play" id="btnPlay" title="Play / pause (Space)">&#9654;</button>
+          <button class="gbtn" id="btnNext"  title="Forward (&rarr;)">&#9654;&#9654;</button>
+          <button class="gbtn" id="btnEnd"   title="End (End)">&#9197;</button>
+          <button class="gbtn" id="btnSpeed" title="Playback speed">1&times;</button>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ══════════ The ledger: standings + your record ══════════ -->
+  <section class="ledger">
+    <div class="rail">
+      <span class="rail-title">Leaderboard</span>
+      <table class="lb-table">
+        <thead><tr><th>#</th><th>player</th><th>rating</th><th>games</th><th>avg err</th></tr></thead>
+        <tbody id="lbBody"><tr><td colspan="5" class="lb-empty">no guesses yet</td></tr></tbody>
+      </table>
+    </div>
+    <div class="rail" id="historyCard">
+      <span class="rail-title">Your Recent Games</span>
+      <ul class="history" id="historyList"><li class="lb-empty">nothing yet &mdash; lock in a guess</li></ul>
+    </div>
+  </section>
 
   <!-- ══════════ Name modal ══════════ -->
   <div class="modal-backdrop hidden" id="nameModal">
     <div class="modal">
-      <h2>♞ Who's guessing?</h2>
-      <p class="hint">Your name goes on the leaderboard. Ratings start at 1000.</p>
-      <input type="text" id="nameInput" maxlength="20" placeholder="e.g. Alex" autocomplete="off">
-      <p class="name-error hidden" id="nameError">Letters, numbers, spaces, . _ - only (max 20).</p>
-      <button class="btn-primary" id="btnJoin">Start guessing</button>
+      <span class="rail-title">Who's Guessing?</span>
+      <div class="modal-body">
+        <p class="hint">Your name goes on the leaderboard. Ratings start at 1000.</p>
+        <input type="text" id="nameInput" maxlength="20" placeholder="e.g. Alex" autocomplete="off">
+        <p class="name-error hidden" id="nameError">Letters, numbers, spaces, . _ - only (max 20).</p>
+        <button class="gbtn primary" id="btnJoin">Start guessing</button>
+      </div>
     </div>
   </div>
 

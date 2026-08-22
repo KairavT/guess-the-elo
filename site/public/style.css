@@ -24,6 +24,28 @@ body {
   min-height: 100vh;
 }
 
+/* ── scrollbars ──────────────────────────────────────────────
+   Same idiom as alexanderli.dev: squared off, no grey — thumb in the
+   accent over a near-bg well, with a well-colored margin so it reads
+   as ruled rather than a slab. `scrollbar-color` is the standard
+   property (Firefox, Chrome 121+); the -webkit- pseudo-elements cover
+   older Chromium and Safari. */
+:root {
+  scrollbar-color: var(--accent-dim) #14110c;
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track {
+  background: #14110c;
+  box-shadow: inset 1px 0 0 var(--edge), inset -1px 0 0 var(--edge);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent-dim);
+  border: 2px solid #14110c;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar-corner { background: #14110c; }
+
 /* ── top bar ─────────────────────────────────────────────── */
 .topbar {
   display: flex;

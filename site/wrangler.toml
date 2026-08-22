@@ -1,0 +1,22 @@
+# Guess the Elo — one Worker serves the static frontend (public/) and the
+# JSON API (src/index.js). Requests that match a file in public/ are served
+# by the asset layer; everything else (i.e. /api/*) reaches the Worker.
+name = "guess-the-elo"
+main = "src/index.js"
+compatibility_date = "2026-08-22"
+
+[assets]
+directory = "public"
+
+[observability]
+enabled = true
+
+# ---------------------------------------------------------------------------
+# D1 database binding. Exposed to the Worker as `env.DB`.
+# database_id intentionally omitted: wrangler >= 4.45 auto-provisions the
+# database on first `wrangler deploy`. After deploying, initialise it with:
+#   npm run db:init && npm run db:seed
+# ---------------------------------------------------------------------------
+[[d1_databases]]
+binding = "DB"
+database_name = "guess-the-elo-db"

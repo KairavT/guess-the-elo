@@ -1,9 +1,15 @@
-# Guess the Elo — web app
+# Guess the Elo — API Worker
 
 Watch a real Lichess game replay (moves + real clocks), guess the average
-rating of the two players, and climb the leaderboard. One Cloudflare Worker
-serves both the static frontend (`public/`) and the JSON API (`src/index.js`);
-games, players, and guesses live in a D1 database.
+rating of the two players, and climb the leaderboard.
+
+**The frontend lives on [alexanderli.dev/elo.html](https://alexanderli.dev/elo.html)**
+(the website repo), in the site's own letterpress design. This Worker is the
+JSON API plus a redirect that sends anyone landing on the workers.dev URL over
+to the real page. Games, players, and guesses live in a D1 database; ratings
+never leave the server before a guess.
+
+Deployed at: `https://guess-the-elo.thefaix.workers.dev`
 
 ## How scoring works
 
@@ -20,8 +26,13 @@ npm install
 py seed.py                # data/games.jsonl -> seed/games.sql (run scripts/collect.py first)
 npm run db:init:local
 npm run db:seed:local
-npm run dev               # http://localhost:8790
+npm run dev               # API on http://localhost:8791
 ```
+
+Then serve the website repo locally and open its `/elo.html` — the page talks
+to `localhost:8791` automatically when it is itself served from localhost.
+The Worker's CORS allowlist covers `localhost:5199` (the website's dev port)
+and the production origins.
 
 ## Deploy
 
@@ -39,3 +50,5 @@ npm run db:seed
 | `/api/guess` | POST | `{player, gameId, guess}` -> score, reveal elos, update rating |
 | `/api/leaderboard` | GET | Top 50 by rating |
 | `/api/history?player=NAME` | GET | Player's last 10 guesses |
+
+Anything outside `/api/` 302-redirects to the game page on the site.

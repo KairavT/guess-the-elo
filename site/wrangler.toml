@@ -1,12 +1,9 @@
-# Guess the Elo — one Worker serves the static frontend (public/) and the
-# JSON API (src/index.js). Requests that match a file in public/ are served
-# by the asset layer; everything else (i.e. /api/*) reaches the Worker.
+# Guess the Elo — JSON API Worker (src/index.js). The frontend lives on
+# alexanderli.dev/elo.html in the site's own design; non-/api/ requests to
+# this Worker just redirect there.
 name = "guess-the-elo"
 main = "src/index.js"
 compatibility_date = "2026-08-22"
-
-[assets]
-directory = "public"
 
 [observability]
 enabled = true

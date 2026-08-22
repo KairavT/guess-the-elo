@@ -1,8 +1,27 @@
-// Guess the Elo — API Worker. The static frontend lives in public/ and is
-// served by the asset layer; anything that reaches this code is an /api/* call.
+// Guess the Elo — API Worker. The frontend lives on alexanderli.dev/elo.html
+// (the site's letterpress design); this Worker is the JSON API plus a redirect
+// that sends anyone who lands on the workers.dev URL over to the real page.
 //
 // Ratings never leave the server before a guess: /api/game deals a game with
 // the elos stripped, /api/guess scores it server-side and reveals them.
+
+const GAME_URL = 'https://alexanderli.dev/elo.html';
+
+// The site is on Vercel, the API is here — cross-origin, so the browser
+// preflights POSTs and checks every response. Localhost is allowed so the
+// page can be developed against `wrangler dev` / the deployed API directly.
+const ALLOWED_ORIGINS = new Set([
+  'https://alexanderli.dev',
+  'https://www.alexanderli.dev',
+  'http://localhost:5199',
+  'http://127.0.0.1:5199',
+]);
+
+function corsHeaders(request) {
+  const origin = request.headers.get('Origin');
+  if (!origin || !ALLOWED_ORIGINS.has(origin)) return {};
+  return { 'access-control-allow-origin': origin, 'vary': 'Origin' };
+}
 
 const START_RATING = 1000;
 
@@ -52,7 +71,9 @@ async function postGuess(request, env) {
   const gameId = Number(body.gameId);
   const guess = Number(body.guess);
   if (!validName(player)) return json({ error: 'invalid player name' }, 400);
-  if (!Number.isInteger(gameId) || !Number.isInteger(guess) || guess < 100 || guess > 4000) {
+  // Same range the UI enforces — a scripted client gets no wider a dial than
+  // a slider user.
+  if (!Number.isInteger(gameId) || !Number.isInteger(guess) || guess < 400 || guess > 3200) {
     return json({ error: 'invalid guess' }, 400);
   }
 
@@ -84,7 +105,7 @@ async function postGuess(request, env) {
   ).bind(player, START_RATING, delta, err, now).run();
 
   const p = await env.DB.prepare(
-    'SELECT rating, games_played FROM players WHERE name = ?1'
+    'SELECT rating, games_played, best_guess FROM players WHERE name = ?1'
   ).bind(player).first();
 
   return json({
@@ -96,7 +117,19 @@ async function postGuess(request, env) {
     delta,
     rating: p.rating,
     gamesPlayed: p.games_played,
+    bestGuess: p.best_guess,
   });
+}
+
+// One player's own stats — the leaderboard is LIMIT 50, so anyone below the
+// cut would otherwise never see their rating on the page.
+async function getPlayer(url, env) {
+  const player = (url.searchParams.get('player') || '').trim();
+  if (!validName(player)) return json({ error: 'invalid player name' }, 400);
+  const p = await env.DB.prepare(
+    'SELECT rating, games_played, best_guess FROM players WHERE name = ?1'
+  ).bind(player).first();
+  return json(p || {});
 }
 
 async function getLeaderboard(env) {
@@ -124,15 +157,37 @@ async function getHistory(url, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const cors = corsHeaders(request);
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          ...cors,
+          'access-control-allow-methods': 'GET, POST, OPTIONS',
+          'access-control-allow-headers': 'content-type',
+          'access-control-max-age': '86400',
+        },
+      });
+    }
+
+    // Anything that isn't the API is someone visiting the workers.dev URL —
+    // send them to the game's real home on the site.
+    if (!url.pathname.startsWith('/api/')) return Response.redirect(GAME_URL, 302);
+
+    let res;
     try {
-      if (url.pathname === '/api/game' && request.method === 'GET') return await getGame(url, env);
-      if (url.pathname === '/api/guess' && request.method === 'POST') return await postGuess(request, env);
-      if (url.pathname === '/api/leaderboard' && request.method === 'GET') return await getLeaderboard(env);
-      if (url.pathname === '/api/history' && request.method === 'GET') return await getHistory(url, env);
-      return json({ error: 'not found' }, 404);
+      if (url.pathname === '/api/game' && request.method === 'GET') res = await getGame(url, env);
+      else if (url.pathname === '/api/guess' && request.method === 'POST') res = await postGuess(request, env);
+      else if (url.pathname === '/api/leaderboard' && request.method === 'GET') res = await getLeaderboard(env);
+      else if (url.pathname === '/api/history' && request.method === 'GET') res = await getHistory(url, env);
+      else if (url.pathname === '/api/player' && request.method === 'GET') res = await getPlayer(url, env);
+      else res = json({ error: 'not found' }, 404);
     } catch (err) {
       console.log(JSON.stringify({ level: 'error', path: url.pathname, message: err.message }));
-      return json({ error: 'internal error' }, 500);
+      res = json({ error: 'internal error' }, 500);
     }
+    for (const [k, v] of Object.entries(cors)) res.headers.set(k, v);
+    return res;
   },
 };

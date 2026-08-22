@@ -76,7 +76,7 @@ function buildReplay(moves) {
 
 // ── state ───────────────────────────────────────────────────────────────────
 
-const SPEEDS = [{ label: '1×', ms: 800 }, { label: '2×', ms: 400 }, { label: '4×', ms: 200 }, { label: '8×', ms: 100 }];
+const SPEEDS = [{ label: '1×', ms: 1500 }, { label: '2×', ms: 800 }, { label: '4×', ms: 400 }, { label: '8×', ms: 200 }];
 const NAME_RE = /^\w[\w .-]{0,19}$/;
 
 const state = {
@@ -86,7 +86,7 @@ const state = {
   ply: 0,
   playing: false,
   timer: null,
-  speedIdx: 1,
+  speedIdx: 0,
   baseSeconds: 0,
   guessed: false,
 };
@@ -177,8 +177,9 @@ function renderMeta() {
     btn.onclick = () => goto(i + 1);
     strip.appendChild(btn);
   });
+  // Scroll only the strip itself — scrollIntoView would drag the whole page.
   const cur = strip.querySelector('.current');
-  if (cur) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
+  if (cur) strip.scrollLeft = cur.offsetLeft - strip.clientWidth / 2 + cur.clientWidth / 2;
 }
 
 // ── replay control ──────────────────────────────────────────────────────────
@@ -241,7 +242,6 @@ async function loadGame() {
   $('metaResult').textContent = resultText(g);
   $('btnGuess').disabled = false;
   goto(0);
-  play();
 }
 
 async function submitGuess() {

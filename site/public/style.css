@@ -106,6 +106,7 @@ body {
 .board {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
   aspect-ratio: 1;
   border-radius: 6px;
   overflow: hidden;

@@ -14,7 +14,7 @@ with requests.get(URL, stream=True) as response:
                       "Too Short":0}
     while True:
         game = chess.pgn.read_game(reader_text)
-        if not game or count_games == limit:
+        if game is None or count_games == limit:
             break
         if game.headers.get('Event')\
               not in ALLOWED_CATEGORIES:

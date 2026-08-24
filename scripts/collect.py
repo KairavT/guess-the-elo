@@ -1,4 +1,4 @@
-import requests, zstandard, io, chess.pgn
+import requests, zstandard, io, chess.pgn, json
 
 from config import URL, ALLOWED_CATEGORIES, MIN_PLY, OUTPUT_PATH
 
@@ -36,7 +36,10 @@ with requests.get(URL, stream=True) as response, \
             "event": game.headers.get('Event'),
             "result": game.headers.get('Result'),
             "termination": game.headers.get('Termination'),
+            "moves": str(game.accept(chess.pgn.StringExporter(headers=False, variations=False, comments=False)))
         }
+        info_str = json.dumps(game_info) + '\n'
+        out_file.write(info_str)
         count_games += 1
     print(count_games)
     print(game_info)

@@ -1,8 +1,10 @@
 import requests, zstandard, io, chess.pgn
 
-from config import URL, ALLOWED_CATEGORIES, MIN_PLY
+from config import URL, ALLOWED_CATEGORIES, MIN_PLY, OUTPUT_PATH
 
-with requests.get(URL, stream=True) as response:
+with requests.get(URL, stream=True) as response, \
+    open(OUTPUT_PATH, 'w') as out_file:
+
     decompress = zstandard.ZstdDecompressor()
     reader = decompress.stream_reader(response.raw)
     reader_text = io.TextIOWrapper(reader, encoding='utf-8')
@@ -27,8 +29,16 @@ with requests.get(URL, stream=True) as response:
         if game.end().ply() < MIN_PLY:
             reject_counter['Too Short'] += 1
             continue
-
+        game_info = {
+            "white_elo": int(game.headers.get('WhiteElo')),
+            "black_elo": int(game.headers.get('BlackElo')),
+            "time_control": game.headers.get('TimeControl'),
+            "event": game.headers.get('Event'),
+            "result": game.headers.get('Result'),
+            "termination": game.headers.get('Termination'),
+        }
         count_games += 1
     print(count_games)
+    print(game_info)
     print(reject_counter)
 

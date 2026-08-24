@@ -1,6 +1,7 @@
 import requests, zstandard, io, chess.pgn, json
 
-from config import URL, ALLOWED_CATEGORIES, MIN_PLY, OUTPUT_PATH
+from config import URL, ALLOWED_CATEGORIES, MIN_PLY, OUTPUT_PATH, \
+                    NUM_GAMES
 
 with requests.get(URL, stream=True) as response, \
     open(OUTPUT_PATH, 'w') as out_file:
@@ -10,7 +11,7 @@ with requests.get(URL, stream=True) as response, \
     reader_text = io.TextIOWrapper(reader, encoding='utf-8')
 
     count_games = 0
-    limit = 100
+    limit = NUM_GAMES
     reject_counter = {"Wrong Event": 0,
                       "Bot Game": 0,
                       "Too Short":0}

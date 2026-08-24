@@ -22,12 +22,16 @@ CREATE TABLE IF NOT EXISTS games (
 -- One row per person on the leaderboard. `rating` starts at 1000 and moves
 -- +/-30 max per guess (see ratingDelta in src/index.js). `best_guess` is the
 -- smallest error they've ever achieved.
+-- `secret` is the name's claim: a random token the FIRST browser to play the
+-- name generated and stored locally. Requests for a claimed name must carry
+-- it; NULL means unclaimed (legacy row) and the next device adopts it.
 CREATE TABLE IF NOT EXISTS players (
   name         TEXT    PRIMARY KEY COLLATE NOCASE,
   rating       INTEGER NOT NULL,
   games_played INTEGER NOT NULL DEFAULT 0,
   best_guess   INTEGER,
-  created_at   INTEGER NOT NULL
+  created_at   INTEGER NOT NULL,
+  secret       TEXT
 );
 
 -- One row per guess. UNIQUE(player, game_id) means a game can only ever be

@@ -42,9 +42,38 @@ function validName(name) {
   return typeof name === 'string' && /^\w[\w .-]{0,19}$/.test(name);
 }
 
+function validSecret(secret) {
+  return typeof secret === 'string' && /^[\w-]{8,64}$/.test(secret);
+}
+
+// Name claiming, no accounts: the first browser to play a name stores a random
+// secret against it; from then on only requests carrying that secret may play
+// as the name. A request with NO secret may still play names nobody has
+// claimed (this is also what keeps cached copies of the old page working) —
+// it just can never touch a claimed one, which is the entire point.
+// Rows from before this existed (secret NULL) count as unclaimed until a
+// secret-bearing client adopts them. Returns true when the caller may act.
+async function claimOk(env, player, secret) {
+  const has = validSecret(secret);
+  const row = await env.DB.prepare('SELECT secret FROM players WHERE name = ?1')
+    .bind(player).first();
+  if (!row) return true;                       // no row yet — first guess claims it
+  if (row.secret === null) {
+    if (has) {
+      await env.DB.prepare('UPDATE players SET secret = ?2 WHERE name = ?1 AND secret IS NULL')
+        .bind(player, secret).run();
+    }
+    return true;
+  }
+  return has && row.secret === secret;
+}
+
 async function getGame(url, env) {
   const player = (url.searchParams.get('player') || '').trim();
   if (!validName(player)) return json({ error: 'invalid player name' }, 400);
+  if (!(await claimOk(env, player, url.searchParams.get('secret') || ''))) {
+    return json({ error: 'name taken' }, 403);
+  }
 
   const row = await env.DB.prepare(
     `SELECT id, time_control, result, termination, moves, clocks FROM games
@@ -68,9 +97,11 @@ async function postGuess(request, env) {
   if (!body) return json({ error: 'bad json' }, 400);
 
   const player = String(body.player || '').trim();
+  const secret = String(body.secret || '');
   const gameId = Number(body.gameId);
   const guess = Number(body.guess);
   if (!validName(player)) return json({ error: 'invalid player name' }, 400);
+  if (!(await claimOk(env, player, secret))) return json({ error: 'name taken' }, 403);
   // Same range the UI enforces — a scripted client gets no wider a dial than
   // a slider user.
   if (!Number.isInteger(gameId) || !Number.isInteger(guess) || guess < 400 || guess > 3200) {
@@ -95,14 +126,17 @@ async function postGuess(request, env) {
   ).bind(player, gameId, guess, actual, err, delta, now).run();
   if (!inserted.meta.changes) return json({ error: 'already guessed this game' }, 409);
 
+  // secret lands only on INSERT — the claiming moment — and only when the
+  // client actually sent one (NULL keeps the name adoptable). The conflict
+  // branch never touches it, so an existing claim can't be overwritten here.
   await env.DB.prepare(
-    `INSERT INTO players (name, rating, games_played, best_guess, created_at)
-     VALUES (?1, ?2 + ?3, 1, ?4, ?5)
+    `INSERT INTO players (name, rating, games_played, best_guess, created_at, secret)
+     VALUES (?1, ?2 + ?3, 1, ?4, ?5, ?6)
      ON CONFLICT(name) DO UPDATE SET
        rating = rating + ?3,
        games_played = games_played + 1,
        best_guess = MIN(COALESCE(best_guess, ?4), ?4)`
-  ).bind(player, START_RATING, delta, err, now).run();
+  ).bind(player, START_RATING, delta, err, now, validSecret(secret) ? secret : null).run();
 
   const p = await env.DB.prepare(
     'SELECT rating, games_played, best_guess FROM players WHERE name = ?1'
@@ -146,6 +180,9 @@ async function getLeaderboard(env) {
 async function getHistory(url, env) {
   const player = (url.searchParams.get('player') || '').trim();
   if (!validName(player)) return json({ error: 'invalid player name' }, 400);
+  if (!(await claimOk(env, player, url.searchParams.get('secret') || ''))) {
+    return json({ error: 'name taken' }, 403);
+  }
 
   const { results } = await env.DB.prepare(
     `SELECT game_id, guess, actual, err, delta, created_at FROM guesses

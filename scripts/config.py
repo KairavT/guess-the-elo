@@ -7,4 +7,4 @@ MIN_PLY = 10
 SCRIPT_DIR = Path(__file__).resolve().parent
 OUTPUT_PATH = SCRIPT_DIR.parent / 'data' / 'games.jsonl'
 RANDOM_SEED = 123
-TEST_FRACTION = 0.2
+TEST_FRACTION = 0.2 

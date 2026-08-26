@@ -37,7 +37,9 @@ with requests.get(URL, stream=True) as response, \
             "event": game.headers.get('Event'),
             "result": game.headers.get('Result'),
             "termination": game.headers.get('Termination'),
-            "moves": str(game.accept(chess.pgn.StringExporter(headers=False, variations=False, comments=False)))
+            "moves": str(game.accept(chess.pgn.StringExporter(headers=False, variations=False, comments=False))),
+            "white_user": game.headers.get('White'),
+            "black_user": game.headers.get('Black')
         }
         info_str = json.dumps(game_info) + '\n'
         out_file.write(info_str)

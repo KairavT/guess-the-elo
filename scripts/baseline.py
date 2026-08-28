@@ -46,8 +46,6 @@ features_test = np.array(features_test)
 targets_test = np.array(targets_test)
 
 print(f'Average elo:{mean_train}, Standard deviation: {stdev_train}, RMSE: {rmse_test}')
-print(features_train.shape, targets_train.shape,\
-      features_test.shape, targets_test.shape)
 
 gbr = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=RANDOM_SEED)
 gbr.fit(features_train, targets_train)

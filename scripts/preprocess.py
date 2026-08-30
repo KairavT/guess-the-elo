@@ -1,5 +1,6 @@
 import json, random
 
+from collections import Counter
 from config import OUTPUT_PATH, RANDOM_SEED, TEST_FRACTION,\
                    TEST_PATH, TRAIN_PATH
 
@@ -45,3 +46,26 @@ with open(OUTPUT_PATH, 'r') as in_file,\
 
         else:
             kept_games['remove'] += 1
+
+count_tokens = Counter()
+with open(TRAIN_PATH, 'r') as train_file:
+    for line in train_file:
+        data = json.loads(line)
+        moves_data = data['moves']
+        tokens = moves_data.split()
+        tokens_correct = []
+        for token in tokens:
+            if not token.endswith('.') and token not in ['1-0', '0-1',\
+                                                    '1/2-1/2', '*']:
+                tokens_correct.append(token)
+        count_tokens.update(tokens_correct)
+        
+single_count = 0
+for count in count_tokens:
+    if count_tokens[count] == 1:
+        single_count += 1
+    
+        
+print(f'Unique Tokens: {len(count_tokens)}')
+print(f'Top 10: {count_tokens.most_common(10)}')
+print(f'# of Singles: {single_count}')

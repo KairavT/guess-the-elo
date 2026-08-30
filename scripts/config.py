@@ -10,3 +10,4 @@ RANDOM_SEED = 123
 TEST_FRACTION = 0.2 
 TRAIN_PATH = SCRIPT_DIR.parent / 'data' / 'games_train.jsonl'
 TEST_PATH = SCRIPT_DIR.parent / 'data' / 'games_test.jsonl'
+TOP_N = 4000

@@ -2,7 +2,7 @@ import json, random
 
 from collections import Counter
 from config import OUTPUT_PATH, RANDOM_SEED, TEST_FRACTION,\
-                   TEST_PATH, TRAIN_PATH
+                   TEST_PATH, TRAIN_PATH, VOCAB_SIZE, VOCAB_PATH
 
 
 random.seed(RANDOM_SEED)
@@ -65,7 +65,16 @@ for count in count_tokens:
     if count_tokens[count] == 1:
         single_count += 1
     
-        
-print(f'Unique Tokens: {len(count_tokens)}')
-print(f'Top 10: {count_tokens.most_common(10)}')
-print(f'# of Singles: {single_count}')
+
+common_N = count_tokens.most_common(VOCAB_SIZE)
+
+token_stoi = {
+    '<pad>':0,
+    '<unk>':1,
+    '<cls>':2
+}
+for token in enumerate(common_N, start=3):
+    token_stoi[token[1][0]] = token[0]
+
+with open(VOCAB_PATH, 'w') as vocab:
+    json.dump(token_stoi, vocab)

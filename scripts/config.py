@@ -11,3 +11,4 @@ TEST_FRACTION = 0.2
 TRAIN_PATH = SCRIPT_DIR.parent / 'data' / 'games_train.jsonl'
 TEST_PATH = SCRIPT_DIR.parent / 'data' / 'games_test.jsonl'
 VOCAB_SIZE = 4000
+VOCAB_PATH = SCRIPT_DIR.parent / 'data' / 'vocab.json'

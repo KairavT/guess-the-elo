@@ -1,4 +1,4 @@
-import json, random
+import json, random, numpy
 
 from collections import Counter
 from config import OUTPUT_PATH, RANDOM_SEED, TEST_FRACTION,\
@@ -48,6 +48,7 @@ with open(OUTPUT_PATH, 'r') as in_file,\
             kept_games['remove'] += 1
 
 count_tokens = Counter()
+token_counts = []
 with open(TRAIN_PATH, 'r') as train_file:
     for line in train_file:
         data = json.loads(line)
@@ -59,6 +60,7 @@ with open(TRAIN_PATH, 'r') as train_file:
                                                     '1/2-1/2', '*']:
                 tokens_correct.append(token)
         count_tokens.update(tokens_correct)
+        token_counts.append(len(tokens_correct))
         
 single_count = 0
 for count in count_tokens:
@@ -78,3 +80,5 @@ for token in enumerate(common_N, start=3):
 
 with open(VOCAB_PATH, 'w') as vocab:
     json.dump(token_stoi, vocab)
+
+print(numpy.percentile(token_counts, 95))

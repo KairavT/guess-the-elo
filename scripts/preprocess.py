@@ -3,7 +3,7 @@ import json, random, numpy
 from collections import Counter
 from config import OUTPUT_PATH, RANDOM_SEED, TEST_FRACTION,\
                    TEST_PATH, TRAIN_PATH, VOCAB_SIZE, VOCAB_PATH
-
+from tokenizer import tokenize
 
 random.seed(RANDOM_SEED)
 
@@ -53,12 +53,7 @@ with open(TRAIN_PATH, 'r') as train_file:
     for line in train_file:
         data = json.loads(line)
         moves_data = data['moves']
-        tokens = moves_data.split()
-        tokens_correct = []
-        for token in tokens:
-            if not token.endswith('.') and token not in ['1-0', '0-1',\
-                                                    '1/2-1/2', '*']:
-                tokens_correct.append(token)
+        tokens_correct = tokenize(moves_data)
         count_tokens.update(tokens_correct)
         token_counts.append(len(tokens_correct))
         
@@ -80,5 +75,3 @@ for token in enumerate(common_N, start=3):
 
 with open(VOCAB_PATH, 'w') as vocab:
     json.dump(token_stoi, vocab)
-
-print(numpy.percentile(token_counts, 95))

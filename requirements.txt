@@ -2,6 +2,12 @@ certifi==2026.7.22
 charset-normalizer==3.5.1
 chess==1.11.2
 idna==3.18
+joblib==1.5.3
+narwhals==2.25.0
+numpy==2.5.2
 requests==2.34.2
+scikit-learn==1.9.0
+scipy==1.18.1
+threadpoolctl==3.6.0
 urllib3==2.7.0
 zstandard==0.25.0

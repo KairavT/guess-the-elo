@@ -1,4 +1,4 @@
-import json, random, numpy
+import json, random
 
 from collections import Counter
 from config import OUTPUT_PATH, RANDOM_SEED, TEST_FRACTION,\
@@ -48,19 +48,13 @@ with open(OUTPUT_PATH, 'r') as in_file,\
             kept_games['remove'] += 1
 
 count_tokens = Counter()
-token_counts = []
 with open(TRAIN_PATH, 'r') as train_file:
     for line in train_file:
         data = json.loads(line)
         moves_data = data['moves']
         tokens_correct = tokenize(moves_data)
         count_tokens.update(tokens_correct)
-        token_counts.append(len(tokens_correct))
         
-single_count = 0
-for count in count_tokens:
-    if count_tokens[count] == 1:
-        single_count += 1
     
 
 common_N = count_tokens.most_common(VOCAB_SIZE)

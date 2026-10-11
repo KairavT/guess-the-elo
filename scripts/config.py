@@ -13,3 +13,5 @@ TEST_PATH = SCRIPT_DIR.parent / 'data' / 'games_test.jsonl'
 VOCAB_SIZE = 4000
 VOCAB_PATH = SCRIPT_DIR.parent / 'data' / 'vocab.json'
 MAX_SEQ_LEN = 128
+MEAN_ELO = 1649.9
+TRAIN_STDEV = 396.9

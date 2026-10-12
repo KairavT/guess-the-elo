@@ -1,6 +1,6 @@
 import torch, tokenizer, json
 from config import VOCAB_PATH, TRAIN_PATH, MAX_SEQ_LEN, MEAN_ELO, TRAIN_STDEV
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 class ChessDataset(Dataset):
     def __init__(self, path):
@@ -27,3 +27,21 @@ class ChessDataset(Dataset):
                    (game['black_elo'] - MEAN_ELO)/TRAIN_STDEV]
         return torch.tensor(ids, dtype=torch.long), torch.tensor(mask, dtype=torch.long), torch.tensor(targets, dtype=torch.float32)
         
+if __name__ == '__main__':
+    d = ChessDataset(TRAIN_PATH)
+    chess_loader = DataLoader(
+        dataset=d,
+        batch_size=64,
+        shuffle=True
+        )
+    for batch in chess_loader:
+        ids, mask, targets = batch[0], batch[1], batch[2]
+        print(ids.shape, mask.shape, targets.shape)
+        break
+    id_to_move = {value: key for (key, value) in d.vocab.items()}
+    i, m, t = d[0]
+    i = i.tolist()
+    m = m.tolist()
+    decoded = [id_to_move[tok] for tok in i[1:sum(m)]]
+    print(decoded == tokenizer.tokenize(d.games[0]['moves']))
+

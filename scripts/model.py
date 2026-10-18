@@ -16,3 +16,10 @@ class EloModel(nn.Module):
         )
         self.encoder = nn.TransformerEncoder(encoder_layer=encoder_layer, num_layers=N_LAYERS)
         self.head = nn.Linear(in_features=D_MODEL, out_features=2)
+
+    def forward(self, ids, mask):
+        pos = torch.arange(start=0, end=MAX_SEQ_LEN, device=ids.device)
+        x = self.move_embed(ids) + self.pos_embed(pos)
+        x = self.encoder(x, src_key_padding_mask=(mask==0))
+        x = x[:,0,:]
+        return self.head(x)

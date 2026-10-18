@@ -23,3 +23,16 @@ class EloModel(nn.Module):
         x = self.encoder(x, src_key_padding_mask=(mask==0))
         x = x[:,0,:]
         return self.head(x)
+    
+from dataset import ChessDataset
+from torch.utils.data import DataLoader
+from config import TRAIN_PATH
+
+if __name__ == '__main__':
+    model = EloModel()
+    d = ChessDataset(TRAIN_PATH)
+    loader = DataLoader(d, batch_size=64, shuffle=True)
+    ids, mask, targets = next(iter(loader))
+    out = model(ids, mask)
+    print(out.shape)
+    print(sum(p.numel() for p in model.parameters()))

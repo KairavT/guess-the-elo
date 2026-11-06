@@ -14,7 +14,7 @@ class EloModel(nn.Module):
             dropout=DROPOUT,
             batch_first=True
         )
-        self.encoder = nn.TransformerEncoder(encoder_layer=encoder_layer, num_layers=N_LAYERS)
+        self.encoder = nn.TransformerEncoder(encoder_layer=encoder_layer, num_layers=N_LAYERS, enable_nested_tensor=False)
         self.head = nn.Linear(in_features=D_MODEL, out_features=2)
 
     def forward(self, ids, mask):

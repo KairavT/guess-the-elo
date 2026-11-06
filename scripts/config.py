@@ -22,3 +22,5 @@ DROPOUT = 0.1
 BATCH_SIZE = 64
 LEARNING_RATE = 3e-4
 EPOCHS = 10
+VAL_FRACTION = 0.1
+MODEL_PATH = SCRIPT_DIR.parent / 'models' / 'elo_model.pt'
